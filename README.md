@@ -17,6 +17,9 @@ The screen shows "Built by Mason" and the build number Mason assigned
   cluster's workers when it has no host yet.
 - `smoke` (on request): one Linux stage that saves a small `hello` artifact,
   for checking a cluster's storage without a Mac.
+- `mac` (on request): one `mac-xcode` stage that builds the app for the
+  simulator without signing and saves the `.app`, for checking a Mac worker
+  before Apple is set up.
 
 ## Layout
 

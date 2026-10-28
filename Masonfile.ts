@@ -11,6 +11,9 @@ export function setup(m: Setup) {
   m.workflow('smoke', { triggers: [{ request: true }] }, (w) => {
     w.stage('hello', { on: 'linux', run: hello })
   })
+  m.workflow('mac', { triggers: [{ request: true }] }, (w) => {
+    w.stage('simulator', { on: { type: 'mac-xcode' }, tools: { xcode: '>=26' }, run: simulatorBuild })
+  })
   m.stage('ios', {
     on: { type: 'mac-xcode' },
     tools: { xcode: '>=26' },
@@ -27,6 +30,15 @@ export async function ping(ctx: Stage) {
 export async function hello(ctx: Stage) {
   await ctx.sh('mkdir -p out && date -u > out/hello.txt')
   await ctx.artifacts.save('hello', ['out/hello.txt'])
+}
+
+// An unsigned simulator build: a Mac with Xcode and no Apple setup.
+export async function simulatorBuild(ctx: Stage) {
+  await ctx.sh('xcodebuild -version')
+  await ctx.sh(
+    'xcodebuild -project MasonDemo.xcodeproj -scheme MasonDemo -configuration Debug -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build',
+  )
+  await ctx.artifacts.save('simulator-app', 'build/Build/Products/Debug-iphonesimulator/MasonDemo.app/**')
 }
 
 export async function buildIos(ctx: Stage) {
