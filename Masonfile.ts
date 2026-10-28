@@ -5,6 +5,9 @@ const APP = 'app.teamstation.masondemo'
 export function setup(m: Setup) {
   m.apiVersion(1)
   m.buildNumber(APP, { check: 'apple' })
+  m.workflow('ping', { triggers: [{ request: true }] }, (w) => {
+    w.stage('ping', { on: 'linux', run: ping })
+  })
   m.workflow('smoke', { triggers: [{ request: true }] }, (w) => {
     w.stage('hello', { on: 'linux', run: hello })
   })
@@ -15,6 +18,10 @@ export function setup(m: Setup) {
     publishes: [APP],
     run: buildIos,
   })
+}
+
+export async function ping(ctx: Stage) {
+  await ctx.sh('uname -a')
 }
 
 export async function hello(ctx: Stage) {

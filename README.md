@@ -13,6 +13,8 @@ The screen shows "Built by Mason" and the build number Mason assigned
 - `build` (the default; on push and on request): the `ios` stage archives
   `MasonDemo.xcodeproj` (scheme `MasonDemo`, Release), exports an ad hoc IPA
   and publishes it as `app.teamstation.masondemo`.
+- `ping` (on request): one Linux stage that prints `uname -a`, for checking a
+  cluster's workers when it has no host yet.
 - `smoke` (on request): one Linux stage that saves a small `hello` artifact,
   for checking a cluster's storage without a Mac.
 
