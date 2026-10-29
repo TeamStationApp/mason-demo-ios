@@ -24,9 +24,6 @@ export function setup(m: Setup) {
       run: buildReactNative,
     })
   })
-  m.workflow('probe', { triggers: [{ request: true }] }, (w) => {
-    w.stage('probe', { on: { type: 'mac-xcode' }, run: probe })
-  })
   m.stage('ios', {
     on: { type: 'mac-xcode' },
     tools: { xcode: '>=26' },
@@ -87,10 +84,4 @@ export async function buildReactNative(ctx: Stage) {
   if (result.ipa == null) throw new Error('No IPA was exported')
   await ctx.sh('unzip -l "$IPA" | grep main.jsbundle', { env: { IPA: result.ipa } })
   await ctx.publish({ app: APP, platform: 'ios', path: result.ipa, buildNumber: build })
-}
-
-// Whether the Mac reaches the host that publications upload to.
-export async function probe(ctx: Stage) {
-  await ctx.sh('curl -skv -m 20 -o /dev/null https://146.190.119.218/ 2>&1 | tail -15', { allowFailure: true })
-  await ctx.sh('curl -s -m 20 -o /dev/null -w "%{http_code}\\n" https://example.com/', { allowFailure: true })
 }
