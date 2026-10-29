@@ -18,7 +18,7 @@ export function setup(m: Setup) {
   m.workflow('rn', { triggers: [{ request: true }] }, (w) => {
     w.stage('rn', {
       on: { type: 'mac-xcode' },
-      tools: { node: 'project', xcode: '>=26', brew: ['cocoapods'] },
+      tools: { node: 'project', xcode: '>=26' },
       apple: { distribution: 'adHoc', app: APP },
       publishes: [APP],
       run: buildReactNative,
@@ -67,6 +67,8 @@ export async function buildIos(ctx: Stage) {
 export async function buildReactNative(ctx: Stage) {
   await ctx.sh('echo "stage node $(command -v node) $(node --version), NODE_BINARY=$NODE_BINARY"')
   await ctx.sh('npm ci', { cwd: 'react-native' })
+  // CocoaPods from Homebrew when the Mac lacks it (a NoMac Mac has no Mason helper).
+  await ctx.sh('command -v pod || brew install cocoapods')
   await ctx.sh('pod install', { cwd: 'react-native/ios' })
   const build = ctx.getBuildNumber(APP)
   const result = await ctx.apple.archive({
