@@ -14,6 +14,16 @@ export function setup(m: Setup) {
   m.workflow('mac', { triggers: [{ request: true }] }, (w) => {
     w.stage('simulator', { on: { type: 'mac-xcode' }, tools: { xcode: '>=26' }, run: simulatorBuild })
   })
+  // React Native: the Node.js from .nvmrc runs npm, CocoaPods and Xcode's bundling phase.
+  m.workflow('rn', { triggers: [{ request: true }] }, (w) => {
+    w.stage('rn', {
+      on: { type: 'mac-xcode' },
+      tools: { node: 'project', xcode: '>=26', brew: ['cocoapods'] },
+      apple: { distribution: 'adHoc', app: APP },
+      publishes: [APP],
+      run: buildReactNative,
+    })
+  })
   m.stage('ios', {
     on: { type: 'mac-xcode' },
     tools: { xcode: '>=26' },
@@ -51,5 +61,25 @@ export async function buildIos(ctx: Stage) {
     buildNumber: build,
   })
   if (result.ipa == null) throw new Error('No IPA was exported')
+  await ctx.publish({ app: APP, platform: 'ios', path: result.ipa, buildNumber: build })
+}
+
+export async function buildReactNative(ctx: Stage) {
+  await ctx.sh('echo "stage node $(command -v node) $(node --version), NODE_BINARY=$NODE_BINARY"')
+  await ctx.sh('npm ci', { cwd: 'react-native' })
+  await ctx.sh('pod install', { cwd: 'react-native/ios' })
+  const build = ctx.getBuildNumber(APP)
+  const result = await ctx.apple.archive({
+    workspace: 'react-native/ios/MasonRn.xcworkspace',
+    scheme: 'MasonRn',
+    configuration: 'Release',
+    version: '1.0.0',
+    buildNumber: build,
+    output: 'build/rn',
+  })
+  // The bundling phase's .xcode.env prints the Node.js it runs.
+  await ctx.sh('grep -h "MASON_NODE" build/rn/xcodebuild-archive.log | sort -u')
+  if (result.ipa == null) throw new Error('No IPA was exported')
+  await ctx.sh('unzip -l "$IPA" | grep main.jsbundle', { env: { IPA: result.ipa } })
   await ctx.publish({ app: APP, platform: 'ios', path: result.ipa, buildNumber: build })
 }
